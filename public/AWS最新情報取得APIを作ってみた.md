@@ -1,5 +1,5 @@
 ---
-title: 『AWS最新情報取得APIを作ってみた
+title: AWS最新情報取得APIを作ってみた
 tags:
   - 'aws'
   - 'python'
@@ -9,7 +9,7 @@ updated_at: ''
 id: null
 organization_url_name: null
 slide: false
-ignorePublish: true
+ignorePublish: false
 ---
 
 ## はじめに
