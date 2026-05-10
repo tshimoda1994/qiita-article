@@ -1,12 +1,12 @@
 ---
 title: AWS最新情報取得APIを作ってみた
 tags:
-  - 'aws'
-  - 'python'
-  - 'fastapi'
+  - Python
+  - AWS
+  - FastAPI
 private: false
-updated_at: ''
-id: null
+updated_at: '2026-05-10T15:18:38+09:00'
+id: a663799966c91f2e619b
 organization_url_name: null
 slide: false
 ignorePublish: false
