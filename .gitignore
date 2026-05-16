@@ -1,2 +1,4 @@
 .remote
 node_modules
+# 誤って public/ 内で qiita を実行したときの二重ディレクトリ（コミット抑止）
+public/public/

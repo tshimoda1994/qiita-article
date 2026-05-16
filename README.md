@@ -16,7 +16,7 @@ Qiita CLI で記事を管理するリポジトリです。
 
 ## コマンド
 
-コマンドは必ずこのリポジトリ直下で実行します。
+`npm run` はリポジトリのルートを `--root` に固定するラッパー経由です。**いま開いているターミナルのカレントが `public/` でも**、記事は常に `（リポジトリ直下）/public/` に置かれます。
 
 ```bash
 npm run preview
@@ -24,4 +24,10 @@ npm run pull
 npm run push
 ```
 
-`public/` ディレクトリ内で `qiita pull` などを直接実行すると、`public/public/` が作成されることがあります。
+手元で `npx qiita` / `qiita` を直接使う場合は、リポジトリ直下で実行するか、次のようにルートを明示してください。
+
+```bash
+npx qiita publish --root /path/to/このリポジトリ
+```
+
+`public/` の中だけをカレントにして CLI を実行すると（`--root` なし）、CLI はその場所を「記事ルート」とみなし `public/public/` ができます。
