@@ -2,11 +2,11 @@
 title: 第1回 開発未経験エンジニアがGo言語でツールを作成してみた。（ポートスキャナ編）
 tags:
   - Go
-  - ポートスキャン
   - CLI
+  - ポートスキャン
 private: false
-updated_at: ''
-id: null
+updated_at: '2026-05-18T18:08:18+09:00'
+id: 47c977cbdde35ff24550
 organization_url_name: null
 slide: false
 ignorePublish: false
