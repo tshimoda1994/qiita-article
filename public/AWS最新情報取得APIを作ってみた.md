@@ -5,12 +5,18 @@ tags:
   - AWS
   - FastAPI
 private: false
-updated_at: '2026-05-10T15:18:38+09:00'
+updated_at: "2026-05-10T15:18:38+09:00"
 id: a663799966c91f2e619b
 organization_url_name: null
 slide: false
 ignorePublish: false
 ---
+
+> **注意**
+>
+> 2026/5/20
+> 現在はAPIを廃止してPthonからGoに書き換えを行っております。
+> もし本記事の内容をお試しになりたい方は、EC2 上に`fork`した上で`docker compose` で起動してください。
 
 ## はじめに
 
@@ -28,10 +34,10 @@ ignorePublish: false
 
 ## プロダクト概要
 
-| 項目 | 内容 |
-|------|------|
-| 名前 | aws-whats-new-api |
-| 一言で | AWS最新情報をAPIで取得できる |
+| 項目   | 内容                                                            |
+| ------ | --------------------------------------------------------------- |
+| 名前   | aws-whats-new-api                                               |
+| 一言で | AWS最新情報をAPIで取得できる                                    |
 | リンク | [リポジトリ](https://github.com/tshimoda1994/aws-whats-new-api) |
 
 ## できること
