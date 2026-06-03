@@ -188,19 +188,23 @@ create 直後に触ることになりそうなファイルについて、役割�
 
 ### 全体の流れ
 
+**リクエスト時（`agentcore dev` / invoke）**
+
 ```mermaid
-flowchart TB
-  subgraph req["リクエスト時"]
-    A[HTTP リクエスト] --> B[main.ts<br/>BedrockAgentCoreApp]
-    B --> C[Strands Agent<br/>loadModel + tools]
-    C --> B
-    B --> D[HTTP ストリーム応答]
-  end
-  subgraph dep["デプロイ時"]
-    E[agentcore.json<br/>aws-targets.json] --> F[cdk/bin/cdk.ts]
-    F --> G[cdk/lib/cdk-stack.ts]
-    G --> H[AgentCore Runtime]
-  end
+flowchart TD
+  A[HTTP リクエスト] --> B[main.ts<br/>BedrockAgentCoreApp]
+  B --> C[Strands Agent<br/>loadModel + tools]
+  C --> B
+  B --> D[HTTP ストリーム応答]
+```
+
+**デプロイ時（`agentcore deploy`）**
+
+```mermaid
+flowchart TD
+  E[agentcore.json<br/>aws-targets.json] --> F[cdk/bin/cdk.ts]
+  F --> G[cdk/lib/cdk-stack.ts]
+  G --> H[AgentCore Runtime]
 ```
 
 ローカル開発では `agentcore dev`（内部で `tsx watch main.ts`）が `main.ts` を起動します。本番では `tsc` 後の `main.js` が `entrypoint` と一致します。
@@ -365,4 +369,3 @@ if (mcpSpec?.agentCoreGateways && mcpSpec.agentCoreGateways.length > 0) {
 - [Get started with the AgentCore CLI（公式）](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/runtime-get-started-cli.html "AgentCore CLI Getting started")
 - [AgentCore CLI（GitHub）](https://github.com/aws/agentcore-cli "agentcore-cli")
 - [AgentCore CDK Constructs](https://github.com/aws/agentcore-l3-cdk-constructs "agentcore-l3-cdk-constructs")
-- [Markdown記法 チートシート（Qiita）](https://qiita.com/Qiita/items/c686397e4a0f4f11683d "Qiita Markdown")
