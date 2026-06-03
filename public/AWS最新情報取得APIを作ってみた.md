@@ -15,7 +15,7 @@ ignorePublish: false
 > **注意**
 >
 > 2026/5/20
-> 現在はAPIを廃止してPthonからGoに書き換えを行っております。
+> 現在はAPIを廃止してPythonからGoに書き換えを行っております。
 > もし本記事の内容をお試しになりたい方は、EC2 上に`fork`した上で`docker compose` で起動してください。
 
 ## はじめに
