@@ -1,13 +1,13 @@
 ---
 title: Bedrock AgentCore Runtime CLIのagentcore createコマンドで何が作成されるのか調べてみた
 tags:
-  - typescript
-  - AgentCore
   - AWS
-  - Bedrock
+  - TypeScript
+  - bedrock
+  - AgentCore
 private: false
-updated_at: ''
-id: 
+updated_at: '2026-06-03T23:10:37+09:00'
+id: 0add290f4bf8d3c781fb
 organization_url_name: null
 slide: false
 ignorePublish: false
