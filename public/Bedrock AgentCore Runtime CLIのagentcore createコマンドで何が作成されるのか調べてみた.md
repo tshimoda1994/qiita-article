@@ -6,7 +6,7 @@ tags:
   - bedrock
   - AgentCore
 private: false
-updated_at: '2026-06-03T23:10:37+09:00'
+updated_at: '2026-06-05T18:00:00+09:00'
 id: 0add290f4bf8d3c781fb
 organization_url_name: null
 slide: false
@@ -15,9 +15,9 @@ ignorePublish: false
 
 ## はじめに
 
-**AgentCore CLI** の `agentcore create` を実行したとき、ローカルに何ができるのかを整理する記事です。公式ドキュメントの説明と、手元で生成されたファイルを突き合わせています。
+**AgentCore CLI** の `agentcore create` を実行したとき、ローカルに何ができるのかを整理する記事です。[TypeScript 向け公式チュートリアル](https://docs.aws.amazon.com/ja_jp/bedrock-agentcore/latest/devguide/runtime-get-started-cli-typescript.html)の説明と、手元で生成されたファイルを突き合わせています。
 
-チュートリアル上のデフォルトは Python + Strands + Bedrock ですが、今回はウィザードで **TypeScript** を選びました。
+今回はウィザードで **TypeScript** + **Strands** + **HTTP** を選びました。
 
 :::note info
 ディレクトリ構成やソースの読み解き、文章の整理には生成 AI を使用しました。`agentcore create` の実行とログ・ファイルの中身は、手元の環境で確認しています。気になる箇所があれば、ご指摘いただけると助かります。
@@ -35,7 +35,9 @@ ignorePublish: false
 | 呼び出し | `agentcore invoke` | ローカルまたはデプロイ済みエージェントへプロンプト送信 |
 | 運用確認 | `agentcore status` / `logs` / `traces` | デプロイ状態・ログ・トレースの確認 |
 
-エージェント本体の実装には、**Strands**、LangChain / LangGraph、Google ADK、OpenAI Agents などのフレームワークを選べます（[Getting started](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/runtime-get-started-cli.html) 参照）。プロジェクト直下の `agentcore/agentcore.json` にランタイムやメモリなどを宣言し、`app/<エージェント名>/` にアプリコードを置く構成です。
+エージェント本体の実装には、**Strands**、LangChain / LangGraph、Google ADK、OpenAI Agents などのフレームワークを選べます（[TypeScript 向け Getting started](https://docs.aws.amazon.com/ja_jp/bedrock-agentcore/latest/devguide/runtime-get-started-cli-typescript.html) 参照）。プロジェクト直下の `agentcore/agentcore.json` にランタイムやメモリなどを宣言し、`app/<エージェント名>/` にアプリコードを置く構成です。
+
+TypeScript プロジェクトでは **Node.js 22+** と **AWS CDK** が前提です（公式の [Prerequisites](https://docs.aws.amazon.com/ja_jp/bedrock-agentcore/latest/devguide/runtime-get-started-cli-typescript.html#runtime-get-started-cli-typescript-prerequisites) 参照）。
 
 `agentcore create` は **AWS 上にリソースを作るコマンドではありません**。ローカルにひな型を用意し、デプロイは `agentcore deploy`（内部で AWS CDK）が担います。本記事では、この **create の直後** にディスク上に存在するものに焦点を当てます。
 
@@ -48,56 +50,70 @@ agentcore --help
 
 ## 実行時に入れた値
 
-対話ウィザードでの指定は次のとおりです（ログ: `agentcore/.cli/logs/create/create-20260603-221508.log`）。公式ドキュメントのフラグ名に合わせて記載しています。
+対話ウィザード（TUI）で **明示的に入力・選択した** 項目だけをまとめています（ログ: `agentcore/.cli/logs/create/create-20260603-221508.log`）。
 
 | 項目 | 入力 | 公式のフラグ・備考 |
 |:-----|:-----|:-------------------|
 | プロジェクト名 | `awsagent` | `--name`（英数字、先頭は英字、最大 36 文字） |
-| 作成先ディレクトリ | `/Users/xxx/work/awsagent` | ウィザードで指定したパス |
 | エージェント（ランタイム）名 | `AWSAgent` | `app/AWSAgent/` に展開されます |
-| 言語 | TypeScript | チュートリアル例は Python（`main.py` / `pyproject.toml`） |
+| 言語 | TypeScript | 公式例は `main.ts` / `package.json` / `tsconfig.json` |
 | フレームワーク | Strands | `--framework Strands` |
 | プロトコル | HTTP | ウィザードで選択（後述） |
-| ビルド | CodeZip（推定） | `--build` の既定は `CodeZip` |
-| モデルプロバイダ | Bedrock（推定） | `model/load.ts` が `BedrockModel` |
-| メモリ | なし（推定） | `--memory none` 相当 |
 
-:::note warn
-言語に **TypeScript** を選んだとき、プロトコルの選択肢は **HTTP のみ** でした。公式ドキュメントでは `--protocol` に `HTTP`（既定）・`MCP`・`A2A` が載っていますが、少なくとも今回の CLI では、TypeScript テンプレートと MCP / A2A の組み合わせはウィザード上選べませんでした。
+:::note info
+**作成先ディレクトリは TUI では聞かれませんでした。** `agentcore create` 実行時のカレントディレクトリに、プロジェクト名（`awsagent`）のフォルダが自動作成されます。今回の実体パスは `/Users/xxx/work/awsagent` でしたが、これは実行場所に依存する自動決定です。
 :::
 
-ビルド・モデル・メモリは create ログに一行ずつは出ていませんが、生成された `agentcore.json` とソースから読み取れます。
+:::note warn
+言語に **TypeScript** を選んだとき、プロトコルの選択肢は **HTTP のみ** でした。生成された `agentcore.json` も `"protocol": "HTTP"` です。
+:::
 
-非対話で近い条件にする場合、言語はウィザード専用のため、他は次のようなイメージになります（[Step 2 例](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/runtime-get-started-cli.html#create-agent) を TypeScript 向けにしたものではない点にご注意ください）。
+### 生成結果として書き込まれた値
+
+ウィザードでは意識して選んでいない項目も、生成された `agentcore.json` やソースに含まれます。
+
+| 項目 | 値 | 読み取り元 |
+|:-----|:-----|:-----------|
+| ビルド | `CodeZip` | `agentcore.json` の `runtimes[].build` |
+| モデルプロバイダ | Bedrock | `model/load.ts` の `BedrockModel` |
+| メモリ | なし | `agentcore.json` の `memories: []` |
+| ランタイムバージョン | `NODE_22` | `agentcore.json` の `runtimeVersion` |
+
+非対話で近い条件にする場合、公式の [Step 2](https://docs.aws.amazon.com/ja_jp/bedrock-agentcore/latest/devguide/runtime-get-started-cli-typescript.html#runtime-get-started-cli-typescript-create-agent) では次の 2 段階です。まずプロジェクトだけ作り、`agentcore add agent` で TypeScript エージェントを追加します。
 
 ```bash:agentcore-create.sh
-agentcore create --name awsagent --framework Strands --protocol HTTP --model-provider Bedrock --memory none
+agentcore create --name awsagent --no-agent
+cd awsagent
+agentcore add agent --name AWSAgent --type create --build CodeZip --language TypeScript --framework Strands --model-provider Bedrock --memory none
 ```
+
+対話ウィザード（`agentcore create` のみ）でも同じ結果に近づけられます。
 
 ## 公式ドキュメントとの構造の違い
 
-[Step 2](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/runtime-get-started-cli.html#create-agent) に載っている最小構成は次のとおりです。
+[Step 2](https://docs.aws.amazon.com/ja_jp/bedrock-agentcore/latest/devguide/runtime-get-started-cli-typescript.html#runtime-get-started-cli-typescript-create-agent) に載っている TypeScript の最小構成は次のとおりです。
 
-```text:公式の最小構成
-MyAgent/
+```text:公式の最小構成（TypeScript）
+MyTsAgent/
   agentcore/
     agentcore.json
     aws-targets.json
-    .env.local
   app/
-    MyAgent/
-      main.py
-      pyproject.toml
-  README.md
+    TsAgent/
+      main.ts
+      model/load.ts
+      mcp_client/client.ts
+      package.json
+      tsconfig.json
 ```
 
 今回できたものは、これに加えて次が含まれています。
 
 - **`agentcore/cdk/`** … `agentcore deploy` が CDK で AWS リソースを作るためのプロジェクト
 - **`AGENTS.md`**、**`agentcore/.llm-context/`** … 設定 JSON 編集時の補助（公式の最小ツリーには未記載）
-- **言語まわり** … `app/AWSAgent/main.ts` など TypeScript 用のファイル
+- **`.env.local`**、**`README.md`** … シークレット用テンプレートとプロジェクト説明
 
-プロジェクト名（`awsagent`）と `app/` 配下のフォルダ名（`AWSAgent`）が一致していない点も、公式例（`MyAgent` / `MyAgent`）とは異なります。`agentcore.json` の `runtimes[].name` と `codeLocation` が対応していれば問題ありません。
+プロジェクト名（`awsagent`）と `app/` 配下のフォルダ名（`AWSAgent`）が一致していない点も、公式例（`MyTsAgent` / `TsAgent`）とは異なります。`agentcore.json` の `runtimes[].name` と `codeLocation` が対応していれば問題ありません。
 
 ## 作成ステップ
 
@@ -105,14 +121,14 @@ MyAgent/
 
 | 順番 | ステップ（ログ上の名前） | 入力・条件 | できたもの |
 |:-----:|:-------------------------|:-----------|:-----------|
-| 1 | Create project directory and config files | プロジェクト名 `awsagent`、作成先パス | `agentcore/agentcore.json` など |
+| 1 | Create project directory and config files | プロジェクト名 `awsagent`（作成先はカレントディレクトリに自動） | `agentcore/agentcore.json` など |
 | 2 | Add agent to project | `AWSAgent`、TypeScript、Strands | `app/AWSAgent/` 以下 |
 | 3 | Set up Node environment | （自動） | `app/AWSAgent` で `npm install` |
 | 4 | Prepare agentcore/ directory | （自動） | `agentcore/cdk/`、`AGENTS.md` など |
 | 5 | Initialize git repository | （自動） | `git init` |
 
 :::note info
-公式の Getting started では、create の次が [Step 3: `agentcore dev`](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/runtime-get-started-cli.html#configure-agent)、その次が [Step 5: `agentcore deploy`](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/runtime-get-started-cli.html#deploy-runtime) です。**create だけでは AWS 上の Runtime は作られません。**
+TypeScript 向け公式チュートリアルでは、create の次が [Step 3: `agentcore dev`](https://docs.aws.amazon.com/ja_jp/bedrock-agentcore/latest/devguide/runtime-get-started-cli-typescript.html#runtime-get-started-cli-typescript-test-locally)、その次が [Step 4: `agentcore deploy`](https://docs.aws.amazon.com/ja_jp/bedrock-agentcore/latest/devguide/runtime-get-started-cli-typescript.html#runtime-get-started-cli-typescript-deploy) です。**create だけでは AWS 上の Runtime は作られません。**
 :::
 
 ## ディレクトリ一覧
@@ -137,14 +153,18 @@ awsagent/
     └── AWSAgent/
         ├── main.ts
         ├── model/load.ts
-        └── mcp_client/client.ts
+        ├── mcp_client/client.ts
+        ├── package.json
+        └── tsconfig.json
 ```
 
 | パス | 役割 |
 |:-----|:-----|
 | `agentcore/agentcore.json` | プロジェクトとランタイムの定義 |
 | `agentcore/aws-targets.json` | デプロイ先（今回は `[]` のまま） |
-| `app/AWSAgent/` | エージェントのエントリ |
+| `app/AWSAgent/main.ts` | エージェントのエントリ（Strands + Runtime HTTP） |
+| `app/AWSAgent/package.json` | 依存関係と `build` / `dev` スクリプト（`"type": "module"`） |
+| `app/AWSAgent/tsconfig.json` | TypeScript コンパイル設定 |
 
 ## agentcore.json（作成直後）
 
@@ -174,7 +194,7 @@ awsagent/
 
 | フィールド | 意味 |
 |:-----------|:-----|
-| `build: CodeZip` | zip を S3 経由で Runtime に載せる（[Build types](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/runtime-get-started-cli.html#deployment-modes)） |
+| `build: CodeZip` | TypeScript をコンパイルして zip 化し、S3 経由で Runtime に載せる（[Step 4: deploy](https://docs.aws.amazon.com/ja_jp/bedrock-agentcore/latest/devguide/runtime-get-started-cli-typescript.html#runtime-get-started-cli-typescript-deploy)） |
 | `protocol: HTTP` | Runtime の HTTP API 形式（[HTTP protocol contract](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/runtime-http-protocol-contract.html)） |
 | `runtimeVersion: NODE_22` | TypeScript / Node 22 用 |
 
@@ -207,7 +227,7 @@ flowchart TD
   G --> H[AgentCore Runtime]
 ```
 
-ローカル開発では `agentcore dev`（内部で `tsx watch main.ts`）が `main.ts` を起動します。本番では `tsc` 後の `main.js` が `entrypoint` と一致します。
+ローカル開発では `agentcore dev` が依存関係のインストールと TypeScript のコンパイルを行い、Runtime 相当の HTTP サーバ（既定 `http://localhost:8080`）を起動します。`package.json` の `dev` スクリプトは `tsx watch main.ts` です。デプロイ時は `agentcore deploy` が TypeScript を JavaScript にコンパイルしてパッケージ化します。`agentcore.json` の `build: CodeZip` と `entrypoint: main.js` は、そのデプロイ方式と成果物を表します。
 
 ### app/AWSAgent/main.ts
 
@@ -304,6 +324,13 @@ export function getStreamableHttpMcpClient(): McpClient {
 
 Exa の公開 MCP を接続するサンプルです。`agentcore.json` の **Gateway**（`agentCoreGateways`）とは別で、アプリ内から直接 URL に繋ぐ構成です。
 
+### app/AWSAgent/package.json と tsconfig.json
+
+公式の最小構成にも含まれる TypeScript 用の設定です。
+
+- **`package.json`** … `@strands-agents/sdk`、`bedrock-agentcore` などの依存関係と、`build`（`tsc`）/ `dev`（`tsx watch`）スクリプトを定義します。`"type": "module"` が付くため、import には `.js` 拡張子を付ける ESM 構成です（公式の [Common issues](https://docs.aws.amazon.com/ja_jp/bedrock-agentcore/latest/devguide/runtime-get-started-cli-typescript.html#runtime-get-started-cli-typescript-common-issues) でも言及）。
+- **`tsconfig.json`** … `outDir: dist` にコンパイルし、デプロイ時の `entrypoint: main.js` と整合させます。ローカルで型エラーを確認するときは `app/AWSAgent` で `npm run build` を実行します。
+
 ### agentcore/cdk/bin/cdk.ts
 
 `agentcore deploy` / `npx cdk synth` のエントリです。
@@ -342,23 +369,29 @@ if (mcpSpec?.agentCoreGateways && mcpSpec.agentCoreGateways.length > 0) {
 | `agentcore/agentcore.json` | ランタイム追加、build、プロトコル変更時 |
 | `agentcore/aws-targets.json` | 初回 deploy 前 |
 | `app/AWSAgent/main.ts` | プロンプト・ツール・ストリーム形式 |
+| `app/AWSAgent/package.json` | 依存関係の追加・削除時 |
+| `app/AWSAgent/tsconfig.json` | コンパイル設定の調整時 |
 | `app/AWSAgent/model/load.ts` | モデル ID 変更時 |
 | `app/AWSAgent/mcp_client/client.ts` | 外部 MCP の URL・認証 |
 
 ## create 以降の流れ
 
+TypeScript 向け公式チュートリアルのステップに沿った流れです。
+
 | 公式 | コマンド | 意味 |
 |:-----:|:---------|:-----|
-| Step 3 | `agentcore dev` | ローカル起動・インスペクタ |
-| Step 5 | `agentcore deploy` | CodeZip 化 + CDK で Runtime 作成 |
-| Step 6–7 | `agentcore invoke` | デプロイ後の呼び出し |
+| Step 3 | `agentcore dev` | ローカル起動・インスペクタ（`agentcore dev "プロンプト"` で即時呼び出しも可） |
+| Step 4 | `agentcore deploy` | TypeScript コンパイル + パッケージ化 + CDK で Runtime 作成 |
+| Step 5 | `agentcore invoke` | デプロイ済みエージェントの呼び出し（`--stream` / `--session-id` 対応） |
+| Step 6 | AWS SDK / `agentcore invoke --runtime` | プログラムからの呼び出し |
+| Step 7 | `agentcore remove all` → `agentcore deploy` | AWS リソースの削除 |
 
 ## まとめ
 
 | できたもの | 中身 |
 |:-----------|:-----|
 | 設定 | `agentcore.json`、空の `aws-targets.json`、`.env.local` |
-| アプリ | `app/AWSAgent/`（Strands / TypeScript / HTTP / CodeZip） |
+| アプリ | `app/AWSAgent/`（`main.ts`、`package.json`、`tsconfig.json` ほか） |
 | インフラ用 | `agentcore/cdk/` |
 | その他 | README・AGENTS.md、`git init` |
 
@@ -366,6 +399,7 @@ if (mcpSpec?.agentCoreGateways && mcpSpec.agentCoreGateways.length > 0) {
 
 ## 参考文献
 
-- [Get started with the AgentCore CLI（公式）](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/runtime-get-started-cli.html "AgentCore CLI Getting started")
+- [Get started with the AgentCore CLI in TypeScript（公式）](https://docs.aws.amazon.com/ja_jp/bedrock-agentcore/latest/devguide/runtime-get-started-cli-typescript.html "AgentCore CLI TypeScript Getting started")
+- [Get started with the AgentCore CLI（Python 版・公式）](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/runtime-get-started-cli.html "AgentCore CLI Python Getting started")
 - [AgentCore CLI（GitHub）](https://github.com/aws/agentcore-cli "agentcore-cli")
 - [AgentCore CDK Constructs](https://github.com/aws/agentcore-l3-cdk-constructs "agentcore-l3-cdk-constructs")
